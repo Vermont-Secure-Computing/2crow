@@ -1,0 +1,145 @@
+.navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
+color: #000;  /*Sets the text hover color on navbar*/
+}
+
+.navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active >   
+ a:hover, .navbar-default .navbar-nav > .active > a:focus {
+color: gray; /*BACKGROUND color for active*/
+background-color: #fff;
+}
+
+.navbar-default {
+background-color: #fff;
+border-bottom: 1px solid #d9d9d9;
+}
+
+
+.nav > li > a:hover,
+.nav > li > a:focus {
+text-decoration: none;
+background-color: silver; /*Change rollover cell color here*/
+}
+
+
+.navbar-default .navbar-nav > li > a {
+color: gray; /*Change active text color here*/
+}
+
+.topheadline {
+
+  color: #D8D8D8;
+}
+
+.multisigform {
+
+  margin-top: 20px;
+}
+
+.multisigform button {
+
+  margin-top: 10px;
+}
+
+.multisigform label {
+
+  color: #D8D8D8;
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.merchanttransaction input, button {
+
+  margin-top: 70px;
+}
+
+.multisigform input {
+
+  margin-top: 10px;
+}
+
+.textexplain {
+
+  margin-top: 25px;
+  background: #d9f4fe;  
+}
+
+.textexplain p {
+
+  margin-top: 10px;
+
+}
+
+.merchantinput form {
+
+  margin: 40px 0px 70px 70px;
+}
+
+.merchantinput button {
+
+  margin-top: 0px;
+}
+
+.buyertransaction button {
+
+  margin-top: 0px;
+}
+
+.buyertransaction div {
+
+  margin-top: 70px;
+}
+
+.buyertransaction1 button {
+
+  margin-top: 0px;
+}
+
+.buyertransaction1 div {
+
+  margin-top: 40px;
+  margin-bottom: 70px;
+}
+
+.merchantprivatekey button {
+
+  margin-top: 0px;
+}
+
+.merchantprivatekey div {
+
+  margin-top: 50px;
+}
+
+.merchantsign button {
+
+  margin-top: 10px;
+  margin-bottom: 0px;
+}
+
+.merchantsign form {
+
+  margin-top: 25px;
+}
+
+.merchantbrod form {
+
+  margin-top: 90px;
+  margin-bottom: 30px;
+}
+
+.merchantbrod button {
+
+  margin-top: 10px;
+}
+
+.bottommessage p {
+
+  margin-top: 30px;
+  margin-left: 30px;
+}
+
+.footercopy p {
+
+  margin-top: 15px;
+}
+
