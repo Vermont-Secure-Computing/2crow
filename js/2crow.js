@@ -21,7 +21,8 @@ $(function() {
 		var code1 = "2crow_1_";
 		code1=code1+nPubKey+"_"+amount;
 		//alert(coinjs.pubkeydecompress(merchantAdd));
-		$("#step1result").html(code1 + '\n\n' + wif);
+		$("#step1resultcode").html(code1);
+		$("#step1resultwif").html(wif);
 		
 	});
 
@@ -39,8 +40,10 @@ $(function() {
 		var pubkeys = [codeArray[2],nPubKey];			
 		var tbr = coinjs.pubkeys2MultisigAddress(pubkeys,2);
 		
-		$("#step2output").html('Send '+codeArray[3]+ ' BTC to: '+ tbr.address + '\n\n2crow_2_'+ 
-			tbr.redeemScript + '\n\n' + wif);
+		$("#step2ResultAddress").html('Send '+codeArray[3]+ ' BTC to: '+ tbr.address);
+		$("#step2ResultRedeemScript").html('2crow_2_'+ tbr.redeemScript);
+		$("#step2ResultPK").html(wif);
+		
 		//alert(tbr.address);	
 		
 	});
@@ -88,7 +91,7 @@ $(function() {
 			$("#verifyTransactionData .transactionVersion").html(decode['version']);
 			$("#verifyTransactionData .transactionSize").html(decode.size()+' <i>bytes</i>');
 			$("#verifyTransactionData .transactionLockTime").html(decode['lock_time']);
-			$("#verifyTransactionData").removeClass("hidden");
+			$("#verifyTransactionData").removeClass("d-none");
 			$("#verifyTransactionData tbody").html("");
 
 			var h = '';
@@ -164,5 +167,19 @@ $(function() {
 	$('#refund1').click(function() {
 		//alert("refund1");
 	});
+
+	$('#sidebarCollapse').on('click', function () {
+		$('#sidebar').toggleClass('active');
+	});
+
+	$('#copyStep1code').on('click', function () {
+		
+	});
+
+	$('#copyStep1PK').on('click', function () {
+		
+	});
+
+
 
 });

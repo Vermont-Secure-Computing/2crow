@@ -1,0 +1,599 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>2crow-Bitcoin-Escrow-Service</title>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<link rel="stylesheet" href="css/bootstrap.min.css" media="screen">
+		<link rel="stylesheet" href="css/bootstrap-theme.min.css" media="screen">
+		<link rel="stylesheet" href="css/style.css" media="screen">
+
+		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+                -->
+
+		<script type="text/javascript" src="js/crypto-min.js"></script>
+		<script type="text/javascript" src="js/crypto-sha256.js"></script>
+		<script type="text/javascript" src="js/crypto-sha256-hmac.js"></script>
+		<script type="text/javascript" src="js/ripemd160.js"></script>
+		<script type="text/javascript" src="js/aes.js"></script>
+
+		<script type="text/javascript" src="js/qrcode.js"></script>
+		<script type="text/javascript" src="js/jsbn.js"></script>
+		<script type="text/javascript" src="js/ellipticcurve.js"></script>
+
+                <script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script src="js/bootstrap.bundle.min.js"></script>
+		<script type="text/javascript" src="js/2crow.js"></script>
+		<script type="text/javascript" src="js/coin.js"></script>
+	</head>
+	<body>
+		<div class="hundredVH">
+			
+			<nav class="navbar navbar-expand-lg navbar-custom">
+				<div class="container">
+					<a class="navbar-brand" href="index.html">
+                        <img src="images/2crow_logo.png" alt="2crow-logo" width="156" height="51">
+                    </a>
+				  	
+					<button type="button" id="sidebarCollapse" class="navbar-toggler btn btn-light">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+				  	<div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
+						<div class="navbar-nav">
+							<a class="nav-link" href="#howitworks" data-toggle="tab">Instructions</a>
+						</div>
+				  	</div>
+				</div>
+			  </nav>
+
+			<div class="main-content wrapper d-flex align-items-stretch bg-light-gray">
+				<nav id="sidebar">
+					
+					<div class="p-4 pt-5" id="web-sidebar">
+						<ul class="list-unstyled components mb-5">
+							<li class="active">
+								<a href="#step1" data-toggle="tab">Step 1 - Merchant</a>
+							</li>
+							<li>
+								<a href="#step2" data-toggle="tab">Step 2 - Customer</a>
+							</li>
+							<li>
+								<a href="#step3" data-toggle="tab">Step 3 - Merchant</a>
+							</li>
+							<li>
+								<a href="#step4" data-toggle="tab">Step 4 - Customer</a>
+							</li>
+							<li>
+								<a href="#howitworks" data-toggle="tab">Instructions</a>
+							</li>
+						</ul>
+
+				
+						<div>
+							<p class="fs12">Copyright 2015 2CROW &reg;  - Donate:  12crowDGkeHRaeiJES3PaZgsP9LQc4duwY </p>
+						</div>
+					</div>
+					<div class="p-4 pt-5" id="mobile-sidebar">
+						<ul class="list-unstyled components mb-5">
+							<li class="active">
+								<a href="#step1" data-toggle="tab" onclick="toggleSidebar()">Step 1 - Merchant</a>
+							</li>
+							<li>
+								<a href="#step2" data-toggle="tab" onclick="toggleSidebar()">Step 2 - Customer</a>
+							</li>
+							<li>
+								<a href="#step3" data-toggle="tab" onclick="toggleSidebar()">Step 3 - Merchant</a>
+							</li>
+							<li>
+								<a href="#step4" data-toggle="tab" onclick="toggleSidebar()">Step 4 - Customer</a>
+							</li>
+							<li>
+								<a href="#howitworks" data-toggle="tab" onclick="toggleSidebar()">Instructions</a>
+							</li>
+						</ul>
+
+				
+						<div>
+							<p class="fs12">Copyright 2015 2CROW &reg;  - Donate:  12crowDGkeHRaeiJES3PaZgsP9LQc4duwY </p>
+						</div>
+					</div>
+				</nav>
+
+				<!-- Page Content  -->
+				<div class="width80 d-flex flex-column justify-content-center align-items-center">
+					<div class="content content-grow flex-column tab-content">
+						<!--=======step1=======================-->
+						<div class="tab-pane active" id="step1">
+							<h3 class="topheadline">Merchant - Create Escrow Address - Initiate Transaction</h3>
+							
+							<div class="mt-5 form-horizontal multisigform">
+								<div class="form-group d-flex align-items-center">
+									<span>Amount :</span>
+									<div class="col-sm-8 mx-4">
+										<input type="text" class="form-control" id="inputAmount" placeholder="Escrow Amount (payment + deposit)">
+									</div>
+									<button type="submit" class="btn btn-primary" id="merchantAddress">Submit</button>
+								</div>
+								<div id="multiSigErrorMsg" class="alert alert-danger" style="display:none;"></div>
+								
+							</div>
+							<div class="mt-5 d-flex flex-column p-4 rounded bg-dark-gray">
+								<p>Share this 2crow code with your customer and save this private key.</p>
+								<div class="flex-c">
+									<div class="d-flex justify-content-between">
+										<span>Code:</span>
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep1code" 
+											class="copyImgs"
+											data-bs-toggle="tooltip"
+											onclick="copy('step1resultcode', 'copyStep1code')" 
+										/>
+									</div>
+									<div class="form-control minH72px of-wrap" id="step1resultcode" readonly></div>
+								</div>
+
+								<div class="flex-c mt-4">
+									<div class="d-flex justify-content-between">
+										<span>Private Key:</span>
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep1PK" 
+											class="copyImgs"
+											data-bs-toggle="tooltip" 
+											onclick="copy('step1resultwif', 'copyStep1PK')" 
+										/>
+									</div>
+									<div class="form-control minH24px of-wrap" id="step1resultwif" readonly></div>
+								</div>
+							</div>
+						</div>
+						<!--========endmultisig=======================-->
+						<!--========step2=======================-->
+						<div class="tab-pane" id="step2">
+							<h3 class="topheadline">Customer - Begin a Purchase</h3>
+							
+							
+							<div class="mt-5 form-horizontal multisigform">
+								<div class="form-group d-flex align-items-center">
+									<span>Code :</span>
+									<div class="col-sm-8 mx-4">
+										<input type="text" class="form-control" id="step2code" placeholder="Merchant's 2Crow Code">
+									</div>
+									<button type="submit" class="btn btn-primary" id="customerbegin">Submit</button>
+								</div>
+							</div>
+							
+							<div class="mt-5 d-flex flex-column p-4 rounded bg-dark-gray">
+								<p>Send payment to this address, share this address and 2crow code with merchant, and save this private key.</p>
+								<!-- <div class="bg-white d-flex justify-content-center align-items-center">
+									<textarea class="form-control" rows="6" id="step2output" readonly></textarea>
+								</div> -->
+								<div class="flex-c">
+									<div class="d-flex justify-content-end">
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep2address" 
+											class="copyImgs"
+											data-bs-toggle="tooltip"
+											onclick="copy('step2ResultAddress', 'copyStep2Address')" 
+										/>
+									</div>
+									<div class="form-control minH24px of-wrap" id="step2ResultAddress" readonly></div>
+								</div>
+
+								<div class="flex-c mt-4">
+									<div class="d-flex justify-content-between">
+										<span>Redeem Script:</span>
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep2RedeemScript" 
+											class="copyImgs"
+											data-bs-toggle="tooltip" 
+											onclick="copy('step2ResultRedeemScript', 'copyStep2RedeemScript')" 
+										/>
+									</div>
+									<div class="form-control minH100px of-wrap" id="step2ResultRedeemScript" readonly></div>
+								</div>
+
+								<div class="flex-c mt-4">
+									<div class="d-flex justify-content-between">
+										<span>Private Key:</span>
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep2PK" 
+											class="copyImgs"
+											data-bs-toggle="tooltip"
+											onclick="copy('step2ResultPK', 'copyStep2PK')" 
+										/>
+									</div>
+									<div class="form-control minH24px of-wrap" id="step2ResultPK" readonly></div>
+								</div>
+							</div>
+						</div>
+						<!--========endmerchanttransaction=======================-->
+						<!--========buyertransaction=======================-->
+						<div class="tab-pane" id="step3">
+							<h3 class="topheadline">Merchant - Prepare Transaction for Finalizing </h3>
+							<!--
+							<div class="container textexplain">
+								<p>At this point the merchant should have received the escrow address and verified that it is funded using a block explorer.  Now you need to say where you want the money to wind up.  Paste the 2crow step 2 code received from the customer in the first field, your private key from step 1 in the second field, and the final receiving bitcoin address in the third field.  Send the resulting code to the customer, with the goods or separately.  </p>
+							</div>
+							-->
+							<form class="form-horizontal multisigform mt-5">
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">TX-ID:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="txID" placeholder="Escrow payment TX ID (from a block explorer)">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">Code:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="step3code" placeholder="2crow code from customer">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">Key:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="privKey" placeholder="Escrow Private Key (from step 1)">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">Address 1:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="finalAddress1" placeholder="Final payment Address 1">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">Amount 1:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="step3amount1" placeholder="Total to address 1">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">Address 2:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="finalAddress2" placeholder="Final payment Address 2 (optional)">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-1">Amount 2:</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="step3amount2" placeholder="Total to address 2 (optional)">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center justify-content-end">
+									<div>
+										<button type="button" class="btn btn-primary" id="step3submit">Submit</button>
+									</div>
+								</div>
+							</form>
+							
+							<div class="mt-5 d-flex flex-column p-4 rounded bg-dark-gray">
+								<p>Send this code to the customer so they can finalize.</p>
+								<!-- <div class="bg-white d-flex justify-content-center align-items-center">
+									<textarea class="form-control" rows="6" id="step3result" readonly></textarea>
+								</div> -->
+
+								<div class="flex-c mt-4">
+									<div class="d-flex justify-content-end">
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep3Result" 
+											class="copyImgs"
+											data-bs-toggle="tooltip" 
+											onclick="copy('step3result', 'copyStep3Result')" 
+										/>
+									</div>
+									<div class="form-control minH100px of-wrap" id="step3result" readonly></div>
+								</div>
+							</div>
+						</div>
+						<!--========endbuyertransaction=======================-->
+						<!--========merchantprivatekey=======================-->
+						<div class="tab-pane" id="step4">
+							<h3 class="topheadline">Customer - Finalize Transaction</h3>
+							<!--				
+							<div class="container textexplain">
+								<p>To finalize the transaction and release the funds to the merchant.  In the first field place the 2crow code sent by the merchant.  In the second field place your escrow key from step 2. </p>
+							</div>
+							-->
+							<form class="mt-5 form-horizontal multisigform">
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-2">Code :</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="step4code" placeholder="2crow Code">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center">
+									<span class="col-sm-2 col-sm-offset-2">Key :</span>
+									<div class="col-sm-10">
+										<input type="text" class="form-control" id="step4key" placeholder="Escrow Private Key (from step 2)">
+									</div>
+								</div>
+								<div class="mt-3 d-flex align-items-center justify-content-end">
+									<div>
+										<button type="button" class="btn btn-primary" id= "step4submit">Submit</button>
+									</div>
+								</div>
+							</form>
+							<!-- <form class="form-horizontal alert alert-success">
+								<div class="form-group">
+									<div class="col-sm-12">
+									<p>Broadcast this transaction (or send it to the Merchant to broadcast).</p>
+									<textarea class="form-control" rows="3" id="step4result" readonly></textarea>
+									</div>
+								</div>
+							</form> -->
+							<div class="mt-5 d-flex flex-column p-4 rounded bg-dark-gray">
+								<p>Broadcast this transaction (or send it to the Merchant to broadcast).</p>
+								<!-- <div class="bg-white d-flex justify-content-center align-items-center">
+									<textarea class="form-control" rows="6" id="step4result" readonly></textarea>
+								</div> -->
+
+								<div class="flex-c mt-4">
+									<div class="d-flex justify-content-end">
+										<img 
+											src="./images/copy_button.png" 
+											width="21px" 
+											height="21px" 
+											alt="copy icon" 
+											id="copyStep4Result" 
+											class="copyImgs"
+											data-bs-toggle="tooltip" 
+											onclick="copy('step4result', 'copyStep4Result')" 
+										/>
+									</div>
+									<div class="form-control minH100px of-wrap" id="step4result" readonly></div>
+								</div>
+							</div>
+
+							<div class="d-none verifyData" id="verifyTransactionData">
+										<h4>Transaction Script</h4>
+										<p>The above transaction has been decoded below.  Verify contents before publishing.</p>
+										<div><b>Version</b>: <span class="transactionVersion"></span></div>
+										<div><b>Transaction Size</b>: <span class="transactionSize"></span></div>
+										<div><b>Lock time</b>: <span class="transactionLockTime"></span></div>
+			
+										<hr>
+			
+										<label>Inputs</label>
+										<table class="table table-striped table-hover ins">
+											<thead>
+												<tr style="font-weight:bold;">
+													<td><abbr title="the transaction id">Txid</abbr></td><td><abbr title="index id of the the transaction">N</abbr></td><td><abbr title="transaction script">Script</abbr></td><td><abbr title="is input signed?">Signed?</abbr></td><td><abbr title="is transaction a multisig transaction?">MultiSig?</abbr></td>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+			
+										<label>Outputs</label>
+										<table class="table table-striped table-hover outs">
+											<thead>
+												<tr style="font-weight:bold;">
+													<td><abbr title="address the funds are being sent to">Address</abbr></td><td><abbr title="the amount the address is being sent">Amount</abbr></td><td><abbr title="the script of the transaction">Script</abbr></td>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+									</div>
+						</div>
+						<!--========endmerchantprivatekey=======================-->
+						<!--========buyerprivatekey=======================-->
+						<div class="tab-pane" id="buyerprivatekey">
+							<h3 class="topheadline">Sign buyers transaction</h3>
+							<div class="container textexplain">
+								<p>Use this to initiate a refund if the funds are still in escrow.  If the funds are moved out of escrow already, refunds can be handled with direct transactions.  Merchant enters here the 2crow code and their escrow private key.</p>
+							</div>
+							<div class="col-sm-8 col-sm-offset-2 merchantprivatekey">
+								<div class="input-group">
+								<input type="text" class="form-control" placeholder="Place your privatekey here.">
+								<span class="input-group-btn">
+									<button class="btn btn-default" type="button" id="refund1">Submit</button>
+								</span>
+								</div><!-- /input-group -->
+							</div><!-- /.col-sm-8 -->
+							<div class="col-sm-8 col-sm-offset-2 merchantsign">
+								<form class="form-horizontal">
+								<div class="form-group">
+									<div class="col-sm-12">
+									<textarea class="form-control" rows="3" placeholder="Sign your transaction here."></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="col-sm-10">
+									<button type="submit" class="btn btn-success">Sign</button>
+									</div>
+								</div>
+								</form>
+							</div>
+						</div>
+						<!--========endbuyerprivatekey=======================-->
+						<!--========merchantbroadcast=======================-->
+						<div class="tab-pane" id="merchantbroadcast">
+							<h3 class="topheadline">Merchants transaction broadcast</h3>
+							<div class="container textexplain">
+								<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+							</div>
+							<div class="col-sm-8 col-sm-offset-2 merchantbrod">
+								<form class="form-horizontal">
+								<div class="form-group">
+									<div class="col-sm-12">
+									<textarea class="form-control" rows="3" placeholder="Broadcast your transaction here."></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="col-sm-10">
+									<button type="submit" class="btn btn-success">broadcast</button>
+									</div>
+								</div>
+								</form>
+							</div>
+						</div>
+						<!--========endmerchantbroadcast=======================-->
+						<!--========buyerbroadcast=======================-->
+						<div class="tab-pane" id="addressgenerator">
+							<h3 class="topheadline">Address Generator</h3>
+							<div class="container textexplain">
+								<p>If you need a new bitcoin address keypair, use this form.  Click "Generate" and a private key and bitcoin address will be generated which could be used by the merchant or customer when needed.  </p>
+							</div>
+							<div class="col-sm-8 col-sm-offset-2 merchantbrod">
+								<form class="form-horizontal">
+								<div class="form-group">
+									<div class="col-sm-12">
+									<p>New keypair will appear in the textarea.</p>
+									<textarea class="form-control" rows="3" id="privkeyandaddress" readonly></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="col-sm-10">
+									<button type="submit" class="btn btn-success" id="genarateKeypair">generate</button>
+									</div>
+								</div>
+								</form>
+							</div>
+						</div>
+						<!--========endbuyerbroadcast=======================-->
+						<!--========HowItWorks=======================-->
+						<div class="tab-pane" id="howitworks">
+							<div class="tab-pane" id="faq0">
+								<h3 class="topheadline">How It Works</h3>
+								<div class="container textexplain">
+									<p class="text-justify">Please take a look at the <a href="http://2crow.org/readme.txt">readme</a>. This site is completely client side, it will also run on an offline computer. </p>
+									<p class="text-justify">An escrow account is created that is controlled by both the buyer and the seller.  The merchant is unable to spend the funds until the customer finalizes the transaction.  2Crow contributors and creators have zero control and zero liability for your use of this service.</p>
+									<p class="text-justify">This project is currently 100% donation supported.  Please support it at 12crowDGkeHRaeiJES3PaZgsP9LQc4duwY </p>
+							
+			
+			
+							
+								</div>
+							</div>
+							<!--========endHowItWorks=======================-->
+							<!--========FAQ=======================-->
+							<div class="tab-pane mt-5" id="faq1">
+								<h3 class="topheadline">Instructions - Step 1</h3>
+								<div class="container textexplain">
+									<p class="text-justify">A Merchant should use this tab to generate a 2Crow address that customers can use to initiate a purchase.  Input the total amount you wish the customer to put in escrow (price + deposit if any).  When you press submit, a code will be generated which you can place on your website or send to your customer.  Important: don't lose the private given to you for this step until the entire transaction is complete or the funds will be lost.  The private key should be kept private and used in step 3.</p> <p>  Advanced:  The code that is generated is just the string "2crow_1_" plus the public key corresponding the the private key which will be 1 of the 2 keys controlling the escrow.  You could also generate this yourself from a web app for example.  </p>
+								</div>
+							</div>
+				
+							<div class="tab-pane mt-5" id="faq2">
+								<h3 class="topheadline">Customer - Step 2</h3>
+								<div class="container textexplain">
+									<p class="text-justify"> A customer should start here to begin a purchase.  Enter the merchant's 2crow code in the first field, it should begin "2crow_1_...".  When you press submit, an escrow address will be created.  You can now fund this address which begins with a 3.  You need to send this address as well as the 2crow code to the merchant to prove you have added funds to the escrow.  Important: don't lose or share the private key generated in this step until step 4 when the entire transaction is finalized!  </p> <p>  Advanced:  If a deposit is involved in this transaction, you will also need to send the merchant an address where you want the deposit returned.  The 2crow code generated here is the string "2crow_2_" plus the scriptsig which validates the 2 of 2 multisignature address.  </p>
+								</div>				
+							</div>
+				
+							<div class="tab-pane mt-5" id="faq3">
+								<h3 class="topheadline">Merchant - Step 3</h3>
+								<div class="container textexplain">
+									<p class="text-justify">At this point as the merchant you should have received the escrow address and verified that it is funded using a block explorer.  You can now ship the goods, seeing that the customer has committed funds.  Now you need to say where you want the money to wind up.  Paste the TX ID which funded the escrow address in field 1 (you can find it in any block explorer).  Place the 2crow step 2 code received from the customer in the second field.  Place your private key for the escrow from step 1 in the third field.  </p> <p> Now you need to select the outputs for this transaction.  Place your final receiving bitcoin address in the fourth field.  In the fifth field, put the amount you wish to receive.  If the customer needs a deposit returned, enter the customer's bitcoin address and the amount in the next fields.  Any funds in escrow not accounted for here will be given to the miners fee.  Make sure this fee is appropriate!  After pressing submit, send the resulting code to the customer, either with the goods or separately, so they can finalize the transaction.  </p> <p> Advanced:  A hex transaction is generated here to move the funds, and one of the two required signatures added.  If you wish to verify the hex transaction you can decode it independently by testing with step 4 here pretending to be the customer).  If you wish to do something more complex like move funds to three or more addresses, you can create your own raw transaction and substitute it in this step, following the string "2crow_3".  </p>
+								</div>
+							</div>
+				
+							<div class="tab-pane mt-5" id="faq4">
+								<h3 class="topheadline">Customer - Step 4</h3>
+								<div class="container textexplain">
+									<p class="text-justify">Here you finalize the transaction and release the funds to the merchant, and any deposit back to yourself.  In the first field place the 2crow code sent by the merchant containing the transaction.  It should begin with 2crow_3_...  In the second field place your private escrow key from step 2.  A signed raw transaction will appear below.  The details of the transaction appear below as well so you can confirm them before publishing.  Important: you need to publish this transaction to the network.  Copy it and paste it into a broadcast or push service such as https://coinb.in/#broadcast, https://blockchain.info/pushtx, or a running full node.  
+								</div>
+							</div>
+				
+							<div class="tab-pane mt-5" id="faq5">
+								<h3 class="topheadline">Frequently Asked Questions</h3>
+								<div class="container textexplain">
+									<p>1) Does this site save any information?  No</p>
+									<p>2) What happens if the merchant never ships the goods?  See failure modes documentation in <a href="http://2crow.org/readme.txt">readme</a>  </p>
+									<p>3) What happens if the customer never finalizes?  See failure modes documentation </p>
+									<p>4) Can you help me with this?  Probably.  See documentation and forums.  </p>
+								</div>				
+							</div>
+							<div class="tab-pane mt-5" id="faq6">
+								<h3 class="topheadline">Acknowlegements</h3>
+								<div class="container textexplain">
+									<p class="text-justify">  A funkenstein the dwarf production.  Operated by Vermont Secure Computing.  Layout and user interface by the team of Stuff0577.  This project relies on the coinjs javascript implementation, outkast, 1ninja, and the coinb.in team.  See source javascript files for more information.  Please submit your improvements to github.com/funkshelper/2crow.  Contact funkenstein at woodcoin dot org for other inquiries.       
+									</p>
+								</div>				
+							</div>
+						</div>
+						<!--========endFAQ=======================-->
+			
+					</div>
+				
+				
+				
+					<div class="d-flex justify-content-center mt-5 bottommessage">
+						<p>2Crow is a 2 party escrow system enabling escrowed bitcoin transactions by using a temporary 2 of 2 multisig address. </p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Initialize tooltips
+			var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+			var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+			  return new bootstrap.Tooltip(tooltipTriggerEl)
+			})
+
+			function toggleSidebar() {
+			  document.getElementById("sidebar").classList.toggle("active");
+			}
+
+			async function copy(txtId, btnId) {
+				console.log("text id: ", txtId)
+				console.log("copy id: ", btnId)
+
+				let text = document.getElementById(txtId).innerHTML;
+				
+				try {
+					await navigator.clipboard.writeText(text);
+					console.log('Content copied to clipboard');
+
+					let btn = document.getElementById(btnId)
+					var tooltipCopy = new bootstrap.Tooltip(btn);
+
+					function restoreTitle() {
+						tooltipCopy.hide();
+						btn.setAttribute('data-bs-original-title', '');
+						btn.removeEventListener('mouseleave', restoreTitle);
+					}
+
+					tooltipCopy.hide()
+					btn.setAttribute('data-bs-original-title', 'Copied!');
+
+					tooltipCopy.update();
+					tooltipCopy.show();
+					btn.addEventListener('mouseleave', restoreTitle);
+				} catch (err) {
+					console.error('Failed to copy: ', err);
+				}
+			}
+		</script>
+
+	</body>
+</html>
