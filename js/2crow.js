@@ -101,7 +101,7 @@ $(function() {
 				h += '<td><input class="form-control" type="text" value="'+o.outpoint.hash+'" readonly></td>';
 				h += '<td class="col-xs-1">'+o.outpoint.index+'</td>';
 				h += '<td class="col-xs-2"><input class="form-control" type="text" value="'+Crypto.util.bytesToHex(o.script.buffer)+'" readonly></td>';
-				h += '<td class="col-xs-1"> <span class="glyphicon glyphicon-'+((s.signed=='true')?'ok':'remove')+'-circle"></span>';
+				h += '<td class="col-xs-1"> <span class="bi-'+((s.signed=='true')?'check':'x')+'-circle"></span>';
 				if(s['type']=='multisig' && s['signatures']>=1){
 					h += ' '+s['signatures'];
 				}
@@ -112,7 +112,7 @@ $(function() {
 					var rs = script.decodeRedeemScript(s.script);
 					h += rs['signaturesRequired']+' of '+rs['pubkeys'].length;
 				} else {
-					h += '<span class="glyphicon glyphicon-remove-circle"></span>';
+					h += '<span class="bi-x-circle"></span>';
 				}
 				h += '</td>';
 				h += '</tr>';
