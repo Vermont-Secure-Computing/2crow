@@ -10,9 +10,9 @@
 	var coinjs = window.coinjs = function () { };
 
 	/* public vars */
-	coinjs.pub = 0x00;
-	coinjs.priv = 0x80;
-	coinjs.multisig = 0x05;
+	coinjs.pub = 0x1e;
+	coinjs.priv = 0x9e;
+	coinjs.multisig = 0x16;
 	coinjs.compressed = false;
 
 	/* other vars */

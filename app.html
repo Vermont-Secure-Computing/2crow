@@ -21,11 +21,11 @@
 		<script type="text/javascript" src="js/ripemd160.js"></script>
 		<script type="text/javascript" src="js/aes.js"></script>
 
-		<script type="text/javascript" src="js/qrcode.js"></script>
+		<!-- <script type="text/javascript" src="js/qrcode.js"></script> -->
 		<script type="text/javascript" src="js/jsbn.js"></script>
 		<script type="text/javascript" src="js/ellipticcurve.js"></script>
 
-                <script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
 		<script src="js/bootstrap.bundle.min.js"></script>
 		<script type="text/javascript" src="js/2crow.js"></script>
@@ -106,7 +106,15 @@
 
 				<!-- Page Content  -->
 				<div class="width80 d-flex flex-column justify-content-center align-items-center">
-					<div class="content content-grow flex-column tab-content">
+					<div class="content content-grow flex-column tab-content justify-content-end">
+						<div class="form-group d-flex align-items-center justify-content-end">
+							<label for="coinSelect" class="me-3">Select Coin:</label>
+							<select id="coinSelect" class="form-control w-auto">
+								<option value="bitcoin" data-logo="images/bitcoin_logo.png">Bitcoin</option>
+								<option value="dogecoin" data-logo="images/dogecoin_logo.png">Dogecoin</option>
+							</select>
+							<img id="coinLogo" src="images/bitcoin_logo.png" alt="Coin Logo" width="32" height="32" class="ms-3">
+						</div>
 						<!--=======step1=======================-->
 						<div class="tab-pane active" id="step1">
 							<h3 class="topheadline">Merchant - Create Escrow Address - Initiate Transaction</h3>
