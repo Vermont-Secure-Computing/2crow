@@ -9,11 +9,23 @@
 
 	var coinjs = window.coinjs = function () { };
 
+
+	// const testAddress = 'ltc1qg0cl4dr6sn78j8yxfh2cnd5tv89k37lsst34kk';
+	// const decoded = window.bech32.decode(testAddress);
+
+	// if (decoded) {
+	// 	console.log('Decoded Bech32 Address:', decoded);
+	// } else {
+	// 	console.error('Decoding failed: Invalid Bech32 address.');
+	// }
+
+
 	/* public vars */
 	coinjs.pub = 0x1e;
 	coinjs.priv = 0x9e;
 	coinjs.multisig = 0x16;
 	coinjs.compressed = false;
+	coinjs.bech32 = {'charset':'qpzry9x8gf2tvdw0s3jn54khce6mua7l', 'version':0, 'hrp':'bc'};
 
 	/* other vars */
 	coinjs.developer = '1CWHWkTWaq1K5hevimJia3cyinQsrgXUvg';
@@ -179,6 +191,9 @@
 
 	/* decode or validate an address and return the hash */
 	coinjs.addressDecode = function(addr){
+		if (!addr) {
+			throw new Error('Invalid address: ' + address);
+		}
 		try {
 			var bytes = coinjs.base58decode(addr);
 			var front = bytes.slice(0, bytes.length-4);
@@ -232,12 +247,134 @@
 
 				return o;
 			} else {
-				return false;
+				throw "Invalid checksum";
 			}
 		} catch(e) {
-			return false;
+			bech32rs = coinjs.bech32redeemscript(addr);
+			if(bech32rs){
+				return {'type':'bech32', 'redeemscript':bech32rs};
+			} else {
+				return false;
+			}
 		}
 	}
+
+	/* extract the redeemscript from a bech32 address */
+	coinjs.bech32redeemscript = function(address){
+		var r = false;
+		var decode = coinjs.bech32_decode(address);
+		if(decode){
+			decode.data.shift();
+			return Crypto.util.bytesToHex(coinjs.bech32_convert(decode.data, 5, 8, false));
+		}
+		return r;
+	}
+
+	coinjs.bech32_decode = function(bechString) {
+		var p;
+		var has_lower = false;
+		var has_upper = false;
+		for (p = 0; p < bechString.length; ++p) {
+			if (bechString.charCodeAt(p) < 33 || bechString.charCodeAt(p) > 126) {
+				return null;
+			}
+			if (bechString.charCodeAt(p) >= 97 && bechString.charCodeAt(p) <= 122) {
+				has_lower = true;
+			}
+			if (bechString.charCodeAt(p) >= 65 && bechString.charCodeAt(p) <= 90) {
+				has_upper = true;
+			}
+		}
+		if (has_lower && has_upper) {
+			return null;
+		}
+		bechString = bechString.toLowerCase();
+		var pos = bechString.lastIndexOf('1');
+		if (pos < 1 || pos + 7 > bechString.length || bechString.length > 90) {
+			return null;
+		}
+		var hrp = bechString.substring(0, pos);
+		var data = [];
+		for (p = pos + 1; p < bechString.length; ++p) {
+			var d = coinjs.bech32.charset.indexOf(bechString.charAt(p));
+			if (d === -1) {
+				return null;
+			}
+			data.push(d);
+		}
+		if (!coinjs.bech32_verifyChecksum(hrp, data)) {
+			return null;
+		}
+		return {
+			hrp: hrp,
+			data: data.slice(0, data.length - 6)
+		};
+	}
+
+	coinjs.bech32_convert = function(data, inBits, outBits, pad) {
+		var value = 0;
+		var bits = 0;
+		var maxV = (1 << outBits) - 1;
+
+		var result = [];
+		for (var i = 0; i < data.length; ++i) {
+			value = (value << inBits) | data[i];
+			bits += inBits;
+
+			while (bits >= outBits) {
+				bits -= outBits;
+				result.push((value >> bits) & maxV);
+			}
+		}
+
+		if (pad) {
+			if (bits > 0) {
+				result.push((value << (outBits - bits)) & maxV);
+			}
+		} else {
+			if (bits >= inBits) throw new Error('Excess padding');
+			if ((value << (outBits - bits)) & maxV) throw new Error('Non-zero padding');
+		}
+
+		return result;
+	}
+
+	coinjs.	bech32_verifyChecksum = function(hrp, data) {
+		return coinjs.bech32_polymod(coinjs.bech32_hrpExpand(hrp).concat(data)) === 1;
+	}
+
+	coinjs.bech32_polymod = function(values) {
+		var chk = 1;
+		var BECH32_GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+		for (var p = 0; p < values.length; ++p) {
+			var top = chk >> 25;
+			chk = (chk & 0x1ffffff) << 5 ^ values[p];
+			for (var i = 0; i < 5; ++i) {
+				if ((top >> i) & 1) {
+					chk ^= BECH32_GENERATOR[i];
+				}
+			}
+		}
+		return chk;
+	}
+
+	coinjs.bech32_hrpExpand = function(hrp) {
+		var ret = [];
+		var p;
+		for (p = 0; p < hrp.length; ++p) {
+			ret.push(hrp.charCodeAt(p) >> 5);
+		}
+		ret.push(0);
+		for (p = 0; p < hrp.length; ++p) {
+			ret.push(hrp.charCodeAt(p) & 31);
+		}
+		return ret;
+	}
+	
+	
+		
+	
+	
 
 	/* retreive the balance from a given address */
 /*	coinjs.addressBalance = function(address, callback){
@@ -461,22 +598,28 @@
 		}
 
 		/* create output script to spend */
-		r.spendToScript = function(address){
-			var addr = coinjs.addressDecode(address);
-			var s = coinjs.script();
-			if(addr.version==5){ // multisig address
-				s.writeOp(169); //OP_HASH160
-				s.writeBytes(addr.bytes);
-				s.writeOp(135); //OP_EQUAL
-			} else { // regular address
-				s.writeOp(118); //OP_DUP
-				s.writeOp(169); //OP_HASH160
-				s.writeBytes(addr.bytes);
-				s.writeOp(136); //OP_EQUALVERIFY
-				s.writeOp(172); //OP_CHECKSIG
+			r.spendToScript = function(address){
+				var addr = coinjs.addressDecode(address);
+				var s = coinjs.script();
+				console.log('Script object:', s);
+				if(addr.type == "bech32"){
+					s.writeOp(0);
+					s.writeBytes(Crypto.util.hexToBytes(addr.redeemscript));
+				} else if(addr.version==coinjs.multisig){ // multisig address
+					s.writeOp(169); //OP_HASH160
+					s.writeBytes(addr.bytes);
+					s.writeOp(135); //OP_EQUAL
+				} else { // regular address
+					s.writeOp(118); //OP_DUP
+					s.writeOp(169); //OP_HASH160
+					s.writeBytes(addr.bytes);
+					s.writeOp(136); //OP_EQUALVERIFY
+					s.writeOp(172); //OP_CHECKSIG
+				}
+				return s;
 			}
-			return s;
-		}
+		
+		
 
 		/* geneate a (script) pubkey hash of the address - used for when signing */
 		r.pubkeyHash = function(address) {
@@ -537,24 +680,44 @@
 		r.timestamp = null;
 		r.block = null;
 
-		/* add an input to a transaction */
-		r.addinput = function(txid, index, script){
+		r.addinput = function(txid, index, script) {
+			if (!txid || typeof index !== 'number') {
+				throw new Error(`Invalid input: txid=${txid}, index=${index}`);
+			}
 			var o = {};
-			o.outpoint = {'hash':txid, 'index':index};
-			o.script = coinjs.script(script||[]);
-			o.sequence = (r.lock_time==0) ? 4294967295 : 0;
+			o.outpoint = { 'hash': txid, 'index': index };
+			o.script = coinjs.script(script || []);
+			o.sequence = (r.lock_time == 0) ? 4294967295 : 0;
+		
+			console.log('Adding input:', o);
 			return this.ins.push(o);
-		}
-
-		/* add an output to a transaction */
-		r.addoutput = function(address, value){
+		};
+		
+		r.addoutput = function(address, value) {
+			if (!this.outs) {
+				console.error('Reinitializing outs');
+				this.outs = [];
+			}
+			if (!Array.isArray(this.outs)) {
+				console.error('outs is not a standard array. Converting.');
+				this.outs = Array.from(this.outs);
+			}
+		
 			var o = {};
-			o.value = new BigInteger('' + Math.round((value*1) * 1e8), 10);
+			o.value = new BigInteger('' + Math.round((value * 1) * 1e8), 10);
 			var s = coinjs.script();
 			o.script = s.spendToScript(address);
-
+		
+			console.log('Adding output:', o);
+			console.log('outs before push:', this.outs);
+		
+		
+			console.log('outs after push:', this.outs);
 			return this.outs.push(o);
-		}
+		};
+		
+		
+		
 
 		/* add two outputs for stealth addresses to a transaction */
 		r.addstealth = function(stealth, value){
@@ -591,7 +754,7 @@
 			var o = {};
 			o.value = new BigInteger('' + Math.round((value*1) * 1e8), 10);
 			var s = coinjs.script();
-			o.script = s.spendToScript(sendaddress);
+			o.script = s.spendToScript(5);
 			
 			return this.outs.push(o);
 		}
@@ -676,20 +839,77 @@
 		*/
 
 		/* generate the transaction hash to sign from a transaction input */
-		r.transactionHash = function(index) {
+		r.transactionHash = function(index, sigHashType) {
+
 			var clone = coinjs.clone(this);
+			var shType = sigHashType || 1;
+
+			/* black out all other ins, except this one */
+			for (var i = 0; i < clone.ins.length; i++) {
+				if(index!=i){
+					clone.ins[i].script = coinjs.script();
+				}
+			}
+
+			var extract = this.extractScriptKey(index);
+			clone.ins[index].script = coinjs.script(extract['script']);
+
 			if((clone.ins) && clone.ins[index]){
-				for (var i = 0; i < clone.ins.length; i++) {
-					if(index!=i){
-						clone.ins[i].script = coinjs.script();
+
+				/* SIGHASH : For more info on sig hashs see https://en.bitcoin.it/wiki/OP_CHECKSIG
+					and https://bitcoin.org/en/developer-guide#signature-hash-type */
+
+				if(shType == 1){
+					//SIGHASH_ALL 0x01
+
+				} else if(shType == 2){
+					//SIGHASH_NONE 0x02
+					clone.outs = [];
+					for (var i = 0; i < clone.ins.length; i++) {
+						if(index!=i){
+							clone.ins[i].sequence = 0;
+						}
+					}
+
+				} else if(shType == 3){
+
+					//SIGHASH_SINGLE 0x03
+					clone.outs.length = index + 1;
+
+					for(var i = 0; i < index; i++){
+						clone.outs[i].value = -1;
+						clone.outs[i].script.buffer = [];
+					}
+
+					for (var i = 0; i < clone.ins.length; i++) {
+						if(index!=i){
+							clone.ins[i].sequence = 0;
+						}
+					}
+
+				} else if (shType >= 128){
+					//SIGHASH_ANYONECANPAY 0x80
+					clone.ins = [clone.ins[index]];
+
+					if(shType==129){
+						// SIGHASH_ALL + SIGHASH_ANYONECANPAY
+
+					} else if(shType==130){
+						// SIGHASH_NONE + SIGHASH_ANYONECANPAY
+						clone.outs = [];
+
+					} else if(shType==131){
+                                                // SIGHASH_SINGLE + SIGHASH_ANYONECANPAY
+						clone.outs.length = index + 1;
+						for(var i = 0; i < index; i++){
+							clone.outs[i].value = -1;
+							clone.outs[i].script.buffer = [];
+						}
 					}
 				}
 
-				var extract = this.extractScriptKey(index);
-				clone.ins[index].script = coinjs.script(extract['script']);
-
 				var buffer = Crypto.util.hexToBytes(clone.serialize());
-				buffer = buffer.concat(coinjs.numToBytes(parseInt(1),4));
+				buffer = buffer.concat(coinjs.numToBytes(parseInt(shType), 4));
 				var hash = Crypto.SHA256(buffer, {asBytes: true});
 				var r = Crypto.util.bytesToHex(Crypto.SHA256(hash, {asBytes: true}));
 				return r;
@@ -907,7 +1127,8 @@
 		}
 
 		/* sign inputs */
-		r.sign = function(wif){
+		r.sign = function(wif, sigHashType){
+			var shType = sigHashType || 1;
 			for (var i = 0; i < this.ins.length; i++) {
 				var d = this.extractScriptKey(i);
 
@@ -916,9 +1137,17 @@
 				var pubkeyHash = script.pubkeyHash(w2a['address']);
 
 				if(((d['type'] == 'scriptpubkey' && d['script']==Crypto.util.bytesToHex(pubkeyHash.buffer)) || d['type'] == 'empty') && d['signed'] == "false"){
-					this.signinput(i, wif);
+					this.signinput(i, wif, shType);
+
+				} else if (d['type'] == 'hodl' && d['signed'] == "false") {
+					this.signhodl(i, wif, shType);
+
 				} else if (d['type'] == 'multisig') {
-					this.signmultisig(i, wif);
+					this.signmultisig(i, wif, shType);
+
+				} else if (d['type'] == 'segwit') {
+					this.signsegwit(i, wif, shType);
+
 				} else {
 					// could not sign
 				}
@@ -1177,9 +1406,10 @@
 	}
 
 	/* clone an object */
+	const seen = new WeakSet();
 	coinjs.clone = function(obj) {
 		if(obj == null || typeof(obj) != 'object') return obj;
-		var temp = obj.constructor();
+		var temp = new obj.constructor();
 
 		for(var key in obj) {
 			if(obj.hasOwnProperty(key)) {
@@ -1239,6 +1469,107 @@
 		}
 		return r;
 	}
+
+	coinjs.bech32Encode = function(hrp, data) {
+		const polymod = (values) => {
+			const GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+			let chk = 1;
+			for (let p = 0; p < values.length; ++p) {
+				const b = (chk >> 25) & 0xff;
+				chk = ((chk & 0x1ffffff) << 5) ^ values[p];
+				for (let i = 0; i < 5; ++i) {
+					if ((b >> i) & 1) {
+						chk ^= GENERATOR[i];
+					}
+				}
+			}
+			return chk;
+		};
+	
+		const hrpExpand = (hrp) => {
+			const ret = [];
+			for (let p = 0; p < hrp.length; ++p) {
+				ret.push(hrp.charCodeAt(p) >> 5);
+			}
+			ret.push(0);
+			for (let p = 0; p < hrp.length; ++p) {
+				ret.push(hrp.charCodeAt(p) & 31);
+			}
+			return ret;
+		};
+	
+		const createChecksum = (hrp, data) => {
+			const values = hrpExpand(hrp).concat(data).concat([0, 0, 0, 0, 0, 0]);
+			const mod = polymod(values) ^ 1;
+			const ret = [];
+			for (let p = 0; p < 6; ++p) {
+				ret.push((mod >> (5 * (5 - p))) & 31);
+			}
+			return ret;
+		};
+	
+		const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+		const encode = (hrp, data) => {
+			const combined = data.concat(createChecksum(hrp, data));
+			return hrp + '1' + combined.map((p) => CHARSET[p]).join('');
+		};
+	
+		return encode(hrp, data);
+	};
+	
+	coinjs.bech32Decode = function(bechString) {
+		const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+		bechString = bechString.toLowerCase(); // Convert to lowercase for uniformity
+		const pos = bechString.lastIndexOf('1');
+		if (pos < 1 || pos + 7 > bechString.length || bechString.length > 90) {
+			return null;
+		}
+		const hrp = bechString.substring(0, pos);
+		const data = [];
+		for (let i = pos + 1; i < bechString.length; i++) {
+			const d = CHARSET.indexOf(bechString.charAt(i));
+			if (d === -1) return null;
+			data.push(d);
+		}
+		if (!coinjs.bech32_verifyChecksum(hrp, data)) {
+			return null;
+		}
+		return { hrp, words: data.slice(0, -6) };
+	};
+	
+	
+	
+	coinjs.bech32_verifyChecksum = function(hrp, data) {
+		const polymod = (values) => {
+			const GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+			let chk = 1;
+			for (let p = 0; p < values.length; ++p) {
+				const top = chk >> 25;
+				chk = ((chk & 0x1ffffff) << 5) ^ values[p];
+				for (let i = 0; i < 5; ++i) {
+					if ((top >> i) & 1) {
+						chk ^= GENERATOR[i];
+					}
+				}
+			}
+			return chk;
+		};
+	
+		const hrpExpand = (hrp) => {
+			const ret = [];
+			for (let p = 0; p < hrp.length; ++p) {
+				ret.push(hrp.charCodeAt(p) >> 5);
+			}
+			ret.push(0);
+			for (let p = 0; p < hrp.length; ++p) {
+				ret.push(hrp.charCodeAt(p) & 31);
+			}
+			return ret;
+		};
+	
+		const values = hrpExpand(hrp).concat(data);
+		return polymod(values) === 1;
+	};
 
 })();
 

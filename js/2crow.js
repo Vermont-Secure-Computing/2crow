@@ -4,19 +4,32 @@ $(function() {
 
     // Configure coin settings
     function configureCoin(coin) {
-        if (coin === 'bitcoin') {
-            coinjs.pub = 0x00;        // Bitcoin public address prefix
-            coinjs.priv = 0x80;       // Bitcoin private key prefix
-            coinjs.multisig = 0x05;   // Bitcoin multisig address prefix
-            coinjs.host = 'https://blockchain.info/';
-        } else if (coin === 'dogecoin') {
-            coinjs.pub = 0x1e;        // Dogecoin public address prefix ('D')
-            coinjs.priv = 0x9e;       // Dogecoin private key prefix
-            coinjs.multisig = 0x16;   // Dogecoin multisig address prefix
-            coinjs.host = 'https://dogechain.info/api/v1/';
-        }
-        console.log('Coin configured for:', coin);
-    }
+		if (coin === 'bitcoin') {
+			coinjs.pub = 0x00;
+			coinjs.priv = 0x80;
+			coinjs.multisig = 0x05;
+			coinjs.host = 'https://blockchain.info/';
+		} else if (coin === 'dogecoin') {
+			coinjs.pub = 0x1e;
+			coinjs.priv = 0x9e;
+			coinjs.multisig = 0x16;
+			coinjs.host = 'https://dogechain.info/api/v1/';
+		} else if (coin === 'litecoin') {
+			coinjs.pub = 0x30;
+			coinjs.priv = 0xb0;
+			coinjs.multisig = 0x32;
+			coinjs.host = 'https://blockcypher.com/';
+			coinjs.bech32.hrp = "ltc";
+		} else {
+			console.error('Unsupported coin:', coin);
+		}
+		console.log('Coin configured for:', coin);
+	}
+
+
+	// console.log('Testing Bech32 Address:', isValidLitecoinAddress('ltc1qg0cl4dr6sn78j8yxfh2cnd5tv89k37lsst34kk')); // Expect true
+	// console.log('Testing Legacy Address:', isValidLitecoinAddress('LTCPodGRwZSmPX6YCMECYwTJD4RfvMmijm')); // Expect true
+	
 
     // Handle dropdown change for merchant
     $('#coinSelect').change(function () {
@@ -110,58 +123,49 @@ $(function() {
 	});
 
 	$('#step3submit').click(function () {
-		var tx = coinjs.transaction();
-		var txID = $('#txID').val().trim();
-		var code = $('#step3code').val().trim();
-		var address1 = $('#finalAddress1').val().trim();
-		var amount1 = parseFloat($('#step3amount1').val());
-		var address2 = $('#finalAddress2').val().trim();
-		var amount2 = parseFloat($('#step3amount2').val());
-		var privkeyHex = $('#privKey').val().trim();
+		// try {
+			const tx = coinjs.transaction();
+			const txID = $('#txID').val();
+			const code = $('#step3code').val();
+			const privkey = $('#privKey').val();
+			const address1 = $('#finalAddress1').val();
+			const amount1 = parseFloat($('#step3amount1').val());
+			const address2 = $('#finalAddress2').val();
+			const amount2 = parseFloat($('#step3amount2').val());
 	
-		// Validation for required fields
-		if (!txID || !code || !address1 || isNaN(amount1) || !privkeyHex) {
-			alert("Please fill in all required fields.");
-			return;
-		}
-	
-	
-		try {
-			// Parse the 2crow code
-			var codeArray = code.split('_');
-			console.log("Parsed 2crow code:", codeArray);
-	
-			if (codeArray.length < 3 || codeArray[0] !== '2crow' || codeArray[1] !== '2') {
-				alert("Invalid 2crow code format.");
-				return;
+			if (!txID || !code || !privkey || !address1 || isNaN(amount1) || amount1 <= 0) {
+				throw new Error('Missing or invalid input fields');
 			}
 	
-			var redeemScript = codeArray[2];
-	
+			const codeArray = code.split('_');
+			if (codeArray.length < 3) {
+				throw new Error('Invalid script code format');
+			}
 	
 			// Add inputs and outputs
-			tx.addinput(txID, 0, redeemScript); // Pass the redeem script
+			tx.addinput(txID, 0, codeArray[2]);
 			tx.addoutput(address1, amount1);
-			if (amount2 >= 0.00000001 && address2) tx.addoutput(address2, amount2);
 	
-			// Serialize and sign the transaction
-			var rawtx = tx.serialize();
-			var tx2 = coinjs.transaction();
-			var t = tx2.deserialize(rawtx);
+			if (amount2 >= 0.00000001) {
+				if (!coinjs.addressDecode(address2)) {
+					throw new Error('Invalid Address 2');
+				}
+				tx.addoutput(address2, amount2);
+			}
 	
-			// Sign the transaction using the private key
-			var signed = t.sign(privkeyHex);
+			// Sign transaction
+			const signedTx = tx.sign(privkey);
+			console.log('Signed transaction:', signedTx);
 	
-			// Display the signed transaction
-			$("#step3result").html('2crow_3_' + signed);
-		} catch (e) {
-			console.error("Error during transaction processing:", e);
-			alert("An error occurred: " + (e.message || e));
-		}
+			$("#step3result").html('2crow_3_' + signedTx);
+				// } catch (error) {
+				// 	console.error(error.message);
+				// 	alert('Error: ' + error.message);
+				// }
 	});
 	
 	
-
+	
 	$('#step4submit').click(function() {
 		var tx = coinjs.transaction();
 		var code = $('#step4code').val();
@@ -270,5 +274,96 @@ $(function() {
 	$('#copyStep1PK').on('click', function () {
 		
 	});
+
+	function isValidLitecoinAddress(address) {
+		const litecoinLegacyRegex = /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/; // Legacy addresses
+		const bech32Prefix = 'ltc'; // Bech32 prefix for Litecoin
+	
+		if (address.startsWith(bech32Prefix)) {
+			try {
+	
+				if (decoded.hrp !== bech32Prefix) {
+					console.error(`Invalid Bech32 HRP: ${decoded.hrp}`);
+					return false;
+				}
+	
+				const witnessProgram = bech32.fromWords(decoded.data.slice(1)); // Extract witness program
+				const witnessVersion = decoded.data[0]; // Witness version
+				console.log('Witness Version:', witnessVersion);
+				console.log('Witness Program Length:', witnessProgram.length);
+	
+				// Validate witness version and length
+				if (witnessVersion !== 0) {
+					console.error('Unsupported witness version:', witnessVersion);
+					return false;
+				}
+	
+				if (witnessProgram.length !== 20 && witnessProgram.length !== 32) {
+					console.error(`Invalid Bech32 witness program length: ${witnessProgram.length}`);
+					return false; // Invalid program length
+				}
+	
+				return true; // Valid Bech32 address
+			} catch (e) {
+				console.error('Bech32 decoding error:', e.message);
+				return false;
+			}
+		} else if (litecoinLegacyRegex.test(address)) {
+			return true; // Valid legacy address
+		}
+	
+		// console.error('Address is neither valid Bech32 nor legacy Litecoin format');
+		// return false; // Invalid address
+	}
+	
+	
+	
+	
+	
+	
+	
+
+	// function bech32Decode(address) {
+	// 	try {
+	// 		const decoded = bech32.decode(address);
+	// 		const witnessVersion = decoded.data[0];
+	// 		const witnessProgram = bech32.fromWords(decoded.data.slice(1));
+	
+	// 		if (decoded.prefix !== 'ltc') {
+	// 			throw new Error(`Invalid HRP: ${decoded.prefix}, expected 'ltc'`);
+	// 		}
+	
+	// 		if (witnessVersion !== 0) {
+	// 			throw new Error('Unsupported witness version (only version 0 supported)');
+	// 		}
+	
+	// 		if (witnessProgram.length < 2 || witnessProgram.length > 40) {
+	// 			throw new Error('Invalid witness program length');
+	// 		}
+	
+	// 		return {
+	// 			hrp: decoded.prefix,
+	// 			data: witnessProgram,
+	// 		};
+	// 	} catch (e) {
+	// 		console.error('Bech32 decoding error:', e.message);
+	// 		throw new Error('Invalid Bech32 address.');
+	// 	}
+	// }
+	
+	
+
+	// function addressToScript(address) {
+	// 	if (address.startsWith('ltc1')) {
+	// 		// Bech32 address
+	// 		const decoded = bech32Decode(address);
+	// 		return coinjs.script().witnessProgram(0x00, decoded.data); // Witness version 0
+	// 	} else if (address.startsWith('M') || address.startsWith('L')) {
+	// 		// Legacy Litecoin address
+	// 		return coinjs.script().addressToScript(address);
+	// 	} else {
+	// 		throw new Error("Unsupported Litecoin address format.");
+	// 	}
+	// }
 
 });
