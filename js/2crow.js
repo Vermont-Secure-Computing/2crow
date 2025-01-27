@@ -36,20 +36,20 @@ $(function() {
         const selectedCoin = $(this).val();
         const selectedLogo = $(this).find(':selected').data('logo');
 
-        if ($('#step1resultcode').text() !== '' || $('#step2ResultAddress').text() !== '') {
-            if (confirm('Changing the coin will reset your current data. Do you want to proceed?')) {
-                // Clear previously generated data
-                $('#step1resultcode').empty();
-                $('#step1resultwif').empty();
-                $('#step2ResultAddress').empty();
-                $('#step2ResultRedeemScript').empty();
-                $('#step2ResultPK').empty();
-            } else {
-                // Revert dropdown to the previous selection
-                $(this).val(previousCoin);
-                return;
-            }
-        }
+        // if ($('#step1resultcode').text() !== '' || $('#step2ResultAddress').text() !== '') {
+        //     if (confirm('Changing the coin will reset your current data. Do you want to proceed?')) {
+        //         // Clear previously generated data
+        //         $('#step1resultcode').empty();
+        //         $('#step1resultwif').empty();
+        //         $('#step2ResultAddress').empty();
+        //         $('#step2ResultRedeemScript').empty();
+        //         $('#step2ResultPK').empty();
+        //     } else {
+        //         // Revert dropdown to the previous selection
+        //         $(this).val(previousCoin);
+        //         return;
+        //     }
+        // }
 
         // Update coin logo and configure settings
         $('#coinLogo').attr('src', selectedLogo);
@@ -111,7 +111,7 @@ $(function() {
 				const tbr = coinjs.pubkeys2MultisigAddress(pubkeys, 2);
 	
 				$('#step2ResultAddress').html(`Send ${transactionAmount} ${selectedCurrency.toUpperCase()} to: ${tbr.address}`);
-				$('#step2ResultRedeemScript').html(`2crow_2_${tbr.redeemScript}`);
+				$('#step2ResultRedeemScript').html(`2crow_2_${selectedCurrency}_${tbr.redeemScript}`);
 				$('#step2ResultPK').html(wif); // Display WIF instead of raw private key
 				console.log('Customer Address:', tbr.address);
 			} else {
@@ -141,9 +141,11 @@ $(function() {
 			if (codeArray.length < 3) {
 				throw new Error('Invalid script code format');
 			}
+
+			$('#coinSelect').val(codeArray[2]).change();
 	
 			// Add inputs and outputs
-			tx.addinput(txID, 0, codeArray[2]);
+			tx.addinput(txID, 0, codeArray[3]);
 			tx.addoutput(address1, amount1);
 	
 			if (amount2 >= 0.00000001) {
@@ -157,7 +159,7 @@ $(function() {
 			const signedTx = tx.sign(privkey);
 			console.log('Signed transaction:', signedTx);
 	
-			$("#step3result").html('2crow_3_' + signedTx);
+			$("#step3result").html(`2crow_3_${codeArray[2]}_${signedTx}`);
 				// } catch (error) {
 				// 	console.error(error.message);
 				// 	alert('Error: ' + error.message);
@@ -171,8 +173,9 @@ $(function() {
 		var code = $('#step4code').val();
 		var privkey = $('#step4key').val();
 		var codeArray = code.split('_');
+		$('#coinSelect').val(codeArray[2]).change();
 		//alert(codeArray[2]);
-		var t = tx.deserialize(codeArray[2]);
+		var t = tx.deserialize(codeArray[3]);
 		//alert("added input /n " + txID + "/n" + txScript + "/n"+ txN);
 		var signed = t.sign(privkey)
 		//alert(signed);
